@@ -59,7 +59,7 @@ using namespace std;
 /// YYMMDD) is used as a version number.
 
 static const string EngineVersion = "2.0.1";
-static const string AppName = "Stockfish";
+static const string AppName = "neuroStock";
 static const string AppTag  = "";
 
 

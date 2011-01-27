@@ -23,7 +23,7 @@
 ### ==========================================================================
 
 ### Executable name
-EXE = stockfish
+EXE = neuroStock
 
 ### Installation dir definitions
 PREFIX = /usr/local
@@ -35,7 +35,8 @@ PGOBENCH = ./$(EXE) bench 32 1 10 default depth
 ### Object files
 OBJS = bitboard.o pawns.o material.o endgame.o evaluate.o main.o \
 	misc.o move.o movegen.o history.o movepick.o search.o position.o \
-	tt.o uci.o ucioption.o book.o bitbase.o san.o benchmark.o timeman.o
+	tt.o uci.o ucioption.o book.o bitbase.o san.o benchmark.o timeman.o \
+	bpnlayer.o bpn.o
 
 
 ### ==========================================================================
@@ -227,7 +228,7 @@ ifeq ($(COMP),icc)
 endif
 
 ### 3.2 General compiler settings
-CXXFLAGS = -g -Wall -Wcast-qual -fno-exceptions -fno-rtti $(EXTRACXXFLAGS)
+CXXFLAGS = -g -Wall -Wcast-qual -fno-rtti $(EXTRACXXFLAGS)
 
 ifeq ($(comp),gcc)
 	CXXFLAGS += -ansi -pedantic -Wno-long-long -Wextra
@@ -323,7 +324,7 @@ default:
 
 help:
 	@echo ""
-	@echo "To compile stockfish, type: "
+	@echo "To compile neuroStock, type: "
 	@echo ""
 	@echo "make target ARCH=arch [COMP=comp]"
 	@echo ""

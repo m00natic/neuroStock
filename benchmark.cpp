@@ -85,6 +85,7 @@ void benchmark(int argc, char* argv[]) {
   Options["OwnBook"].set_value("false");
   Options["Use Search Log"].set_value("true");
   Options["Search Log Filename"].set_value("bench.txt");
+  Options["Mode"].set_value("3");
 
   secsPerPos = maxDepth = maxNodes = 0;
   val = atoi(valStr.c_str());

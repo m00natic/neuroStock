@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
   {
       // Print copyright notice
       cout << engine_name()
-           << " by Tord Romstad, Marco Costalba, Joona Kiiski" << endl;
+           << " by Tord Romstad, Marco Costalba, Joona Kiiski, Andrey Kotlarski" << endl;
 
       if (CpuHasPOPCNT)
           cout << "Good! CPU has hardware POPCNT." << endl;
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
   else // Process command line arguments
   {
       if (string(argv[1]) != "bench" || argc > 7)
-          cout << "Usage: stockfish bench [hash size = 128] [threads = 1] "
+          cout << "Usage: neuroStock bench [hash size = 128] [threads = 1] "
                << "[limit = 12] [fen positions file = default] "
                << "[depth, time, perft or node limited = depth]" << endl;
       else

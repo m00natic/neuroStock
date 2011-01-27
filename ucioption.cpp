@@ -106,6 +106,10 @@ void init_uci_options() {
   Options["Minimum Thinking Time"] = Option(20, 0, 5000);
   Options["UCI_Chess960"] = Option(false); // Just a dummy but needed by GUIs
   Options["UCI_AnalyseMode"] = Option(false);
+  // Andrey part
+  Options["Mode"] = Option(2, 0, 3);
+  Options["Neural Network File"] = Option("stock.bpn");
+  Options["Training Threads"] = Option(1, 1, MAX_THREADS);
 
   // Set some SMP parameters accordingly to the detected CPU count
   Option& thr = Options["Threads"];
