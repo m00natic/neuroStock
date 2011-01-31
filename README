@@ -1,3 +1,6 @@
+# -*- mode:org -*-            neuroStock
+#+STARTUP: indent
+
 * Introduction
 
 ** neuroStock is a free UCI chess engine based on the excellent
@@ -13,36 +16,40 @@ networks.  This mode can work correctly only on single thread so be
 sure to specify "Threads" UCI parameter as 1.
 
 1 - online training.  The original Stockfish eval is used to train the
-network specified by the "Neural Network File" UCI parameter while
-neuroStock is playing like Stockfish, albeit way slower.  The neural
-network file format can be found at [fn:2] (not fully specified
-network is also allowed).  Newly trained network is saved to the same
-file when engine is unloaded.  For this mode a single engine thread is
-also mandatory but there is additional "Training Threads" UCI
-parameter which specifies number of threads within the neural network.
+network specified by the "Neural Network File" UCI parameter whose
+evaluation is actually used for playing.  This mode is the slowest but
+the most interesting as the engine is supposed to improve somewhat
+with every move (in fact, with every thought)!  The neural network
+file format can be found at [fn:2] (not fully specified network is
+also allowed).  If the file is missing, new network is created and
+will be freshly initialized.  Newly trained network is saved to the
+same file when engine is unloaded.  For this mode a single engine
+thread is also mandatory but there is additional "Training Threads"
+UCI parameter which specifies number of threads within the neural
+network.
 
 2 - neural network specified by "Neural Network File" UCI parameter is
-used for evaluation (again not fully specified network is also
-allowed but it will be freshly initialized and thus playing about
-randomly).  Multiple threads specified by the "Threads" UCI parameter
-are allowed.
+used for evaluation (again not fully specified network or missing
+network file is also allowed but it will be freshly initialized and
+thus playing randomly).  Multiple threads specified by the "Threads"
+UCI parameter are allowed.
 
 3 - original Stockfish playing.
 
 * MISC
 
-** neuroStock is developed and so far only tested on GNU/Linux.
+** neuroStock is developed and thus far only tested on GNU/Linux.
 ** Instructions about building from source are identical to
 ** Stockfish's.  Invoke `make help' within the source directory for
 ** details and options.
 
 * Disclaimer
 
-** neuroStock is an experiment and in combination with
-** neuroChessTrainer [fn:2] supposed to be testing framework for
-** different backpropagation neural networks.  There are no
-** expectations for engine strength and as far as hardly trained, it
-** plays like a novice drunkard.
+** neuroStock is an experiment (more like meta-engine) and in
+** combination with neuroChessTrainer[fn:2] supposed to be testing
+** platform for different backpropagation neural networks.  There
+** are no expectations for engine strength and as far as hardly
+** trained, it plays like a blond bimbo.
 
 
 * Footnotes

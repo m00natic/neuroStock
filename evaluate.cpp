@@ -311,7 +311,10 @@ Value evaluate(const Position& pos, Value& margin) {
     fen_eval << pos.to_fen() << " [" << (pos.side_to_move() == WHITE ? orig_eval : -orig_eval) << "]";
     bpn0->Train(fen_eval.str().c_str());
 
-    return orig_eval;
+    val = int(bpn0->layers[bpn0->size -1]->products[pos.thread()][0]);
+
+    return (Value) (pos.side_to_move() == WHITE ? val : -val);
+    //    return orig_eval;
 
   case 2:			// neural network playing
     thr = pos.thread();
