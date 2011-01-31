@@ -69,3 +69,21 @@ bpnLayer::~bpnLayer() {
     delete [] weights;
   }
 }
+
+void bpnLayer::ChangeThreads (unsigned thr) {
+  unsigned i;
+
+  for (i=0; i < threads; ++i) {
+    delete products[i];
+  }
+
+  delete [] products;
+
+  threads = thr;
+
+  products = new double*[threads];
+
+  for(i=0; i < threads; ++i) {
+    products[i] = new double[size];
+  }
+}

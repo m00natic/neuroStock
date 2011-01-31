@@ -12,6 +12,7 @@ class bpnLayer {
  public:
   bpnLayer(unsigned, unsigned, bool, outFunction, unsigned);
   ~bpnLayer();
+  void ChangeThreads(unsigned);
 
   unsigned threads;
   unsigned size;
