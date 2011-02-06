@@ -14,18 +14,18 @@ struct LayerThread {
 
 class BPN {
  public:
-  BPN(const char*, unsigned);
+  BPN(const char*, int);
   BPN();
   ~BPN();
 
   void Run(const char*, unsigned);
   bool Train(const char*);
   bool SaveToFile(const char*);
-  void ChangeThreads(unsigned);
+  void ChangeThreads(int);
 
  private:
-  void constructor(unsigned*, bool*, outFunction*, unsigned, double, double, double, unsigned);
-  void ConstructDefault(unsigned);
+  void constructor(unsigned*, bool*, outFunction*, unsigned, double, double, double, int);
+  void ConstructDefault(int);
   void InitializeWeights();
 
   void Run(const char*, bool);
@@ -58,18 +58,22 @@ class BPN {
 
  private:
   double initial_scale;
-  LayerThread **li; // thread info
+  LayerThread **li;		// layer thread info
   pthread_t *thread_ids;
-  unsigned threads; // number of additional threads, should be # cores -1
+  LayerThread **li_w;	// layer thread info for updating weights
+  pthread_t *thread_ids_w;
 
- public:
-  unsigned minchunk; // minimum number of layer units processed by thread
-  unsigned size;
-  bpnLayer **layers;
+  int minchunk; // minimum number of layer units processed by thread
   double* train_output;
   double scale_factor;
-  double alpha;    //  momentum
-  double eta;  //  learning rate
+  double alpha;			//  momentum
+  double eta;			//  learning rate
+
+ public:
+  unsigned size;
+  bpnLayer **layers;
+  int max_threads; // maximum number of additional threads, should be # cores -1
+  pthread_mutex_t max_threads_mutex;
 };
 
 #endif // BPN_H
