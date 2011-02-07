@@ -38,7 +38,7 @@ class BPN {
   void Run();
   void Run(unsigned);
   bool Train();
-  bool DoThreading(unsigned, double (*) (double), void* (*)(void*));
+  bool DoThreading(unsigned, double (*) (double), void* (*)(void*), bool);
 
   static double randomNum(double, double);
   static double ApplyLinear(double);

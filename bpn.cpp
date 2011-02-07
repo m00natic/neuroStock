@@ -565,8 +565,6 @@ void* BPN::UnitThreadFuncBias (void *arg) {
     prods[j] = (*apply)(net);
   }
 
-  lt->bp->max_threads++;
-
   return (void*) true;
 }
 
@@ -594,8 +592,6 @@ void* BPN::UnitThreadFunc (void *arg) {
 
     prods[j] = (*apply)(net);
   }
-
-  lt->bp->max_threads++;
 
   return (void*) true;
 }
@@ -628,8 +624,6 @@ void* BPN::UnitThreadFuncBiasScale (void *arg) {
     prods[j] = (*apply)(net) * scale_factor;
   }
 
-  lt->bp->max_threads++;
-
   return (void*) true;
 }
 
@@ -659,12 +653,10 @@ void* BPN::UnitThreadFuncScale (void *arg) {
     prods[j] = (*apply)(net) * scale_factor;
   }
 
-  lt->bp->max_threads++;
-
   return (void*) true;
 }
 
-bool BPN::DoThreading(unsigned layer, double (*apply) (double), void* (*thrFunc)(void*)) {
+bool BPN::DoThreading(unsigned layer, double (*apply) (double), void* (*thrFunc)(void*), bool dec_threads) {
   int i, layer_size = layers[layer]->size;
   int nthreads = layer_size > max_threads ? max_threads : layer_size - 1;
   int chunk = layer_size / (nthreads+1);
@@ -693,9 +685,11 @@ bool BPN::DoThreading(unsigned layer, double (*apply) (double), void* (*thrFunc)
     lt->end = prev_end;	//(i+1)*chunk
     lt->bp = this;
 
-    pthread_mutex_lock(&max_threads_mutex);
-    --max_threads;
-    pthread_mutex_unlock(&max_threads_mutex);
+    if(dec_threads) {
+      pthread_mutex_lock(&max_threads_mutex);
+      --max_threads;
+      pthread_mutex_unlock(&max_threads_mutex);
+    }
 
     pthread_create(&thread_ids[i], NULL, thrFunc, lt);
   }
@@ -710,9 +704,11 @@ bool BPN::DoThreading(unsigned layer, double (*apply) (double), void* (*thrFunc)
     lt->apply = apply;
     lt->bp = this;
 
-    pthread_mutex_lock(&max_threads_mutex);
-    --max_threads;
-    pthread_mutex_unlock(&max_threads_mutex);
+    if(dec_threads) {
+      pthread_mutex_lock(&max_threads_mutex);
+      --max_threads;
+      pthread_mutex_unlock(&max_threads_mutex);
+    }
 
     retval = (*thrFunc)(lt);
     ok = ok && retval;
@@ -744,9 +740,9 @@ void BPN::Run() {//  assume that input is already placed in the first layer
     }
 
     if(layers[i]->bias)
-      DoThreading(i, apply, UnitThreadFuncBias);
+      DoThreading(i, apply, UnitThreadFuncBias, false);
     else
-      DoThreading(i, apply, UnitThreadFunc);
+      DoThreading(i, apply, UnitThreadFunc, false);
   }
 
   //  same for output layer - though add scale factor
@@ -762,9 +758,9 @@ void BPN::Run() {//  assume that input is already placed in the first layer
   }
 
   if(layers[size-1]->bias)
-    DoThreading(size-1, apply, UnitThreadFuncBiasScale);
+    DoThreading(size-1, apply, UnitThreadFuncBiasScale, false);
   else
-    DoThreading(size-1, apply, UnitThreadFuncScale);
+    DoThreading(size-1, apply, UnitThreadFuncScale, false);
 }
 
 void BPN::Run(unsigned threadid) { //  assume that input is already placed in the first layer
@@ -939,17 +935,9 @@ void* BPN::UnitThreadFuncTrain (void *arg) {
       }
     }
     catch(std::exception ex) {
-      pthread_mutex_lock(&lt->bp->max_threads_mutex);
-      lt->bp->max_threads++;
-      pthread_mutex_unlock(&lt->bp->max_threads_mutex);
-
       return (void*) false;
     }
   }
-
-  pthread_mutex_lock(&lt->bp->max_threads_mutex);
-  lt->bp->max_threads++;
-  pthread_mutex_unlock(&lt->bp->max_threads_mutex);
 
   return (void*) true;
 }
@@ -962,6 +950,7 @@ void* BPN::UnitThreadFuncRenew (void *arg) {
   unsigned end = lt->end;
   double **weigs = l->weights;
   double **delts = l->deltas;
+  double ensure;
 
   try {
     for(unsigned j = lt->start; j < end; ++j) {   //  for each unit
@@ -969,9 +958,18 @@ void* BPN::UnitThreadFuncRenew (void *arg) {
       double *delta = delts[j];
 
       for(k=0; k < lowerSize; ++k) {  //  for each weight - renew
+	ensure = weight[k];
 	weight[k] += (double)delta[k];
-	if(std::isnan(weight[k]))
+
+	if(std::isnan(weight[k])) {
+	  weight[k] = ensure;
+
+	  pthread_mutex_lock(&lt->bp->max_threads_mutex);
+	  lt->bp->max_threads++;
+	  pthread_mutex_unlock(&lt->bp->max_threads_mutex);
+
 	  return (void*) false;
+	}
       }
     }
   }
@@ -1010,7 +1008,7 @@ bool BPN::Train() {		// threaded version
       derivate = DerivateLinear;
     }
 
-    ok = DoThreading(i, derivate, UnitThreadFuncTrain);
+    ok = DoThreading(i, derivate, UnitThreadFuncTrain, false);
 
     if (!ok) {			// join upper renew weight threads
       for(unsigned j = i; j < size-2; ++j) {
@@ -1047,7 +1045,7 @@ bool BPN::Train() {		// threaded version
     }
   }
 
-  ok = DoThreading(1, NULL, UnitThreadFuncRenew);
+  ok = DoThreading(1, NULL, UnitThreadFuncRenew, true);
 
   for(i=0; i < size -2; ++i) {
     if (thread_ids_w[i])
