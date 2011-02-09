@@ -9,6 +9,7 @@ class BPN;
 struct LayerThread {
   unsigned layer, start, end;
   BPN *bp;
+  bool inc_threads;
   double (*apply) (double);
 };
 
@@ -38,7 +39,7 @@ class BPN {
   void Run();
   void Run(unsigned);
   bool Train();
-  bool DoThreading(unsigned, double (*) (double), void* (*)(void*), bool);
+  bool DoThreading(unsigned, double (*) (double), void* (*)(void*));
 
   static double randomNum(double, double);
   static double ApplyLinear(double);
