@@ -9,7 +9,6 @@ class BPN;
 struct LayerThread {
   unsigned layer, start, end;
   BPN *bp;
-  bool inc_threads;
   double (*apply) (double);
 };
 
@@ -56,6 +55,7 @@ class BPN {
 
   static void* UnitThreadFuncTrain (void*);
   static void* UnitThreadFuncRenew (void*);
+  static void* UnitThreadFuncRenewAsync (void*);
 
  private:
   double initial_scale;

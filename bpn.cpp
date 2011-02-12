@@ -684,7 +684,6 @@ bool BPN::DoThreading(unsigned layer, double (*apply) (double), void* (*thrFunc)
     prev_end += chunk;
     lt->end = prev_end;	//(i+1)*chunk
     lt->bp = this;
-    lt->inc_threads = false;
 
     pthread_create(&thread_ids[i], NULL, thrFunc, lt);
   }
@@ -698,7 +697,6 @@ bool BPN::DoThreading(unsigned layer, double (*apply) (double), void* (*thrFunc)
     lt->layer = layer;
     lt->apply = apply;
     lt->bp = this;
-    lt->inc_threads = false;
 
     retval = (*thrFunc)(lt);
     ok = ok && retval;
@@ -953,12 +951,43 @@ void* BPN::UnitThreadFuncRenew (void *arg) {
 
 	if(std::isnan(weight[k])) {
 	  weight[k] = ensure;
+	  return (void*) false;
+	}
+      }
+    }
+  }
+  catch(std::exception ex) {
+    return (void*) false;
+  }
 
-	  if(lt->inc_threads) {
-	    pthread_mutex_lock(&lt->bp->max_threads_mutex);
-	    lt->bp->max_threads++;
-	    pthread_mutex_unlock(&lt->bp->max_threads_mutex);
-	  }
+  return (void*) true;
+}
+
+void* BPN::UnitThreadFuncRenewAsync (void *arg) {
+  LayerThread *lt = (LayerThread*) arg;
+  unsigned k, layer = lt->layer;
+  bpnLayer *l = lt->bp->layers[layer];
+  unsigned lowerSize = l->lowerSize;
+  unsigned end = lt->end;
+  double **weigs = l->weights;
+  double **delts = l->deltas;
+  double ensure;
+
+  try {
+    for(unsigned j = lt->start; j < end; ++j) {   //  for each unit
+      double *weight = weigs[j];
+      double *delta = delts[j];
+
+      for(k=0; k < lowerSize; ++k) {  //  for each weight - renew
+	ensure = weight[k];
+	weight[k] += (double)delta[k];
+
+	if(std::isnan(weight[k])) {
+	  weight[k] = ensure;
+
+	  pthread_mutex_lock(&lt->bp->max_threads_mutex);
+	  lt->bp->max_threads++;
+	  pthread_mutex_unlock(&lt->bp->max_threads_mutex);
 
 	  return (void*) false;
 	}
@@ -966,32 +995,28 @@ void* BPN::UnitThreadFuncRenew (void *arg) {
     }
   }
   catch(std::exception ex) {
-    if(lt->inc_threads) {
-      pthread_mutex_lock(&lt->bp->max_threads_mutex);
-      lt->bp->max_threads++;
-      pthread_mutex_unlock(&lt->bp->max_threads_mutex);
-    }
+    pthread_mutex_lock(&lt->bp->max_threads_mutex);
+    lt->bp->max_threads++;
+    pthread_mutex_unlock(&lt->bp->max_threads_mutex);
 
     return (void*) false;
   }
 
-  if(lt->inc_threads) {
-    pthread_mutex_lock(&lt->bp->max_threads_mutex);
-    lt->bp->max_threads++;
-    pthread_mutex_unlock(&lt->bp->max_threads_mutex);
-  }
+  pthread_mutex_lock(&lt->bp->max_threads_mutex);
+  lt->bp->max_threads++;
+  pthread_mutex_unlock(&lt->bp->max_threads_mutex);
 
   return (void*) true;
 }
 
 bool BPN::Train() {		// threaded version
   double (*derivate) (double); //  pointer to derivate funtion
-  bool ok;
-  unsigned i;
+  bool ok, use_mutex = false;
+  unsigned i, j, hidden_size = size - 2;
   LayerThread *lt;
 
   // lower layers
-  for(i = size-2; i > 0; --i) {   //  compute errors and weights' changes - itterate layers from top to bottom
+  for(i = hidden_size; i > 0; --i) {   //  compute errors and weights' changes - itterate layers from top to bottom
     //  determine derivate function before iterating through units - it's always same derivate for the whole layer
     switch(layers[i]->func) {
     case sigmoid:
@@ -1007,8 +1032,8 @@ bool BPN::Train() {		// threaded version
     ok = DoThreading(i, derivate, UnitThreadFuncTrain);
 
     if (!ok) {			// join upper renew weight threads
-      for(unsigned j = i; j < size-2; ++j) {
-	if(li_w[j]->inc_threads)
+      for(j = i; j < hidden_size; ++j) {
+	if(thread_ids_w[j])
 	  pthread_join(thread_ids_w[j], NULL);
       }
 
@@ -1024,23 +1049,28 @@ bool BPN::Train() {		// threaded version
     lt->bp = this;
 
     if (max_threads > 0) {	// if threads are available, use one
-      lt->inc_threads = true;
-      pthread_mutex_lock(&max_threads_mutex);
-      --max_threads;
-      pthread_mutex_unlock(&max_threads_mutex);
+      if(use_mutex) {
+	pthread_mutex_lock(&max_threads_mutex);
+	--max_threads;
+	pthread_mutex_unlock(&max_threads_mutex);
+      }
+      else {
+	use_mutex = true;
+	--max_threads;
+      }
 
-      pthread_create(&thread_ids_w[i - 1], NULL, UnitThreadFuncRenew, lt);
+      pthread_create(&thread_ids_w[i - 1], NULL, UnitThreadFuncRenewAsync, lt);
     }
     else {
-      lt->inc_threads = false;
+      thread_ids_w[i -1] = 0;
       UnitThreadFuncRenew(lt);
     }
   }
 
   ok = DoThreading(1, NULL, UnitThreadFuncRenew);
 
-  for(i=0; i < size -2; ++i) {
-    if (li_w[i]->inc_threads)
+  for(i=0; i < hidden_size; ++i) {
+    if (thread_ids_w[i])
       pthread_join(thread_ids_w[i], NULL);
   }
 
