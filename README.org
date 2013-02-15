@@ -1,13 +1,14 @@
-# -*- mode:org -*-            neuroStock
-#+STARTUP: indent
-
 * Introduction
 
-** neuroStock is a free UCI chess engine based on the excellent
-** Stockfish [fn:1] which is derived from Glaurung 2.1.  neuroStock
-** is an attempt to integrate a backpropagation neural network as an
-** evaluation function.  The engine has 4 modes of play, controlled
-** by the "Mode" UCI parameter:
+neuroStock is a free UCI chess engine based on the excellent
+Stockfish [fn:1] which is derived from Glaurung 2.1.  neuroStock is an
+attempt to integrate a backpropagation neural network as an evaluation
+function.
+
+* Usage
+
+The engine has 4 modes of play, controlled by the "Mode" UCI
+parameter:
 
 0 - original Stockfish eval is logged to files.  There has to be a
 `logs' directory along the neuroStock executable.  These log files can
@@ -38,18 +39,18 @@ UCI parameter are allowed.
 
 * MISC
 
-** neuroStock is developed and thus far only tested on GNU/Linux.
-** Instructions about building from source are identical to
-** Stockfish's.  Invoke `make help' within the source directory for
-** details and options.
+neuroStock is developed and thus far only tested on GNU/Linux.
+Instructions about building from source are identical to Stockfish's.
+Invoke `make help' within the source directory for details and
+options.
 
 * Disclaimer
 
-** neuroStock is an experiment (more like meta-engine) and in
-** combination with neuroChessTrainer[fn:2] supposed to be testing
-** platform for different backpropagation neural networks.  There
-** are no expectations for engine strength and as far as hardly
-** trained, it plays like a blond bimbo.
+neuroStock is an experiment (more like meta-engine) and in combination
+with neuroChessTrainer[fn:2] supposed to be testing platform for
+different backpropagation neural networks.  There are no expectations
+for engine strength and as far as hardly trained, it plays like a
+blond bimbo.
 
 
 * Footnotes
